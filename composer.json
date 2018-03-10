@@ -1,0 +1,40 @@
+{
+    "name": "vrok/ref-helper",
+    "description": "Utilities to support polymorphic associations with Doctrine2 entities",
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://www.vrok.de/",
+    "keywords": ["polymorphic", "associations", "Doctrine", "entities"],
+    "minimum-stability": "dev",
+
+    "require": {
+        "php": ">=7.2",
+        "doctrine/doctrine-orm-module": "^1.1.5",
+        "zendframework/zend-servicemanager": "^3.3.2"
+    },
+    "require-dev": {
+        "phpunit/PHPUnit": "^6.3.1",
+        "zendframework/zend-coding-standard": "~1.0.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Vrok\\References\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "RefHelperTest\\": "test/RefHelperTest/"
+        }
+    },
+    "scripts": {
+        "check": [
+            "@cs-check",
+            "@test"
+        ],
+        "cs-check": "phpcs",
+        "cs-fix": "phpcbf",
+        "test": "phpunit --colors=always",
+        "test-coverage": "phpunit --colors=always --coverage-clover clover.xml",
+        "upload-coverage": "coveralls -v"
+    }
+}
