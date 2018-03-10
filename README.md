@@ -2,7 +2,7 @@
 
 Library to support polymorphic asssociations with Doctrine 2 in Zend Framework 3.
 
-[![Build Status](https://travis-ci.org/j-schumann/ref-helper.svg?branch=master)](https://travis-ci.org/j-schumann/tex-wrapper) [![Coverage Status](https://coveralls.io/repos/github/j-schumann/ref-helper/badge.svg?branch=master)](https://coveralls.io/github/j-schumann/ref-helper?branch=master)
+[![Build Status](https://travis-ci.org/j-schumann/ref-helper.svg?branch=master)](https://travis-ci.org/j-schumann/ref-helper) [![Coverage Status](https://coveralls.io/repos/github/j-schumann/ref-helper/badge.svg?branch=master)](https://coveralls.io/github/j-schumann/ref-helper?branch=master)
 
 ## Usage
 
