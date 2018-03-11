@@ -5,8 +5,6 @@ return [
             'orm_default' => [
                 'driverClass' => 'Doctrine\DBAL\Driver\PDOSqlite\Driver',
                 'params'      => [
-                    'host'   => null,
-                    'dbname' => null,
                     'memory' => true,
                 ],
             ],

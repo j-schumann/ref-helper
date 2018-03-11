@@ -13,10 +13,11 @@ return [
 // </editor-fold>
 // <editor-fold defaultstate="collapsed" desc="reference_helper">
     /*'reference_helper' => [
-        'entityClass' => [
-            'referenceName' => [
-                'targetClass1',
-                'targetClass2',
+        'allowed_targets' => [
+            'RefHelperTest\Entity\Source' => [
+                'nullable' => [
+                    'RefHelperTest\Entity\Target',
+                ],
             ],
         ],
     ],*/

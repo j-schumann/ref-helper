@@ -10,7 +10,7 @@ Library to support polymorphic asssociations with Doctrine 2 in Zend Framework 3
 reference to another object, use ```HasReferenceTrait``` for simplicity.
 2) Add one or more references to the entity by defining the ```$references```
 property and ```${refName}Class```, ```${refName}Identifiers``` properties for
-each reference:
+each reference
 ```php
 use Doctrine\ORM\Mapping as ORM;
 use Vrok\References\Entity\HasReferenceInterface;
@@ -87,16 +87,18 @@ use Vrok\References\Service\ReferenceHelper;
 $refHelper = $services->get(ReferenceHelper::class);
 $em = $sm->get('Doctrine\ORM\EntityManager');
 
-// the referenced object must already be persisted to have the identifiers
-// (e.g. autoincrement ID) set
+// the referenced object must have its identifiers (primary key columns) set,
+// e.g. be already persisted when using autoincrement ID
 $target = $em->getRepository(Target::class)->find(1);
 
 $source = new Source();
 $refHelper->setReferencedObject($source, 'required', $target);
 $em->persist($source);
 $em->flush();
+$sourceId = $source->getId();
 
-$loaded = $em->getRepository(Source::class)->find(1);
+// later:
+$loaded = $em->getRepository(Source::class)->find(sourceId);
 $refObject = $refHelper->getReferencedObject($source, 'required');
 // $refObject == $target
 ```
@@ -117,5 +119,5 @@ add something like this to your config:
 Now for the reference ```nullable``` only instances of ```Entity\Target```
 (and child classes) are accepted.
 Every other reference on ```Entity\Source``` will still allow every target class.
-Entity classes not listed below ```allowed_targets``` accept every target
+Entity classes not listed in ```allowed_targets``` accept every target
 for everey reference.

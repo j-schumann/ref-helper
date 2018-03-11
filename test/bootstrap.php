@@ -4,7 +4,7 @@
 namespace RefHelperTest;
 
 use Doctrine\ORM\Tools\SchemaTool;
-use Zend\Mvc\Service\ServiceManagerConfig;
+use Zend\Mvc\Application;
 use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\ArrayUtils;
 
@@ -50,7 +50,7 @@ class Bootstrap
         $config = ArrayUtils::merge($baseConfig, $testConfig);
 
         // ensure Module::onBootstrap is called
-        $app = \Zend\Mvc\Application::init($config);
+        $app = Application::init($config);
 
         static::$serviceManager = $app->getServiceManager();
         static::$config         = $config;
@@ -58,6 +58,9 @@ class Bootstrap
         static::primeDatabase();
     }
 
+    /**
+     * @return ServiceManager
+     */
     public static function getServiceManager()
     {
         return static::$serviceManager;
