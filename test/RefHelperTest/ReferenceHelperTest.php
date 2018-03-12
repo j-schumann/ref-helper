@@ -130,8 +130,6 @@ class ReferenceHelperTest extends TestCase
         $sm = Bootstrap::getServiceManager();
         $em = $sm->get('Doctrine\ORM\EntityManager');
         /* @var $em \Doctrine\ORM\EntityManagerInterface */
-        $refHelper = $sm->get(ReferenceHelper::class);
-        /* @var $refHelper ReferenceHelper */
 
         $target = new Entity\Target();
         $em->persist($target);
@@ -139,12 +137,12 @@ class ReferenceHelperTest extends TestCase
         $em->flush();
 
         $source = new Entity\Source();
-        $this->assertNull($refHelper->getReferencedObject($source, 'required'));
+        $this->assertNull($this->refHelper->getReferencedObject($source, 'required'));
 
-        $refHelper->setReferencedObject($source, 'required', $target);
+        $this->refHelper->setReferencedObject($source, 'required', $target);
         $this->assertInstanceOf(
             Entity\Target::class,
-            $refHelper->getReferencedObject($source, 'required')
+            $this->refHelper->getReferencedObject($source, 'required')
         );
     }
 
@@ -153,8 +151,6 @@ class ReferenceHelperTest extends TestCase
         $sm = Bootstrap::getServiceManager();
         $em = $sm->get('Doctrine\ORM\EntityManager');
         /* @var $em \Doctrine\ORM\EntityManagerInterface */
-        $refHelper = $sm->get(ReferenceHelper::class);
-        /* @var $refHelper ReferenceHelper */
 
         $target = new Entity\Target();
         $em->persist($target);
@@ -163,7 +159,7 @@ class ReferenceHelperTest extends TestCase
         $targetId = $target->getId();
 
         $source = new Entity\Source();
-        $refHelper->setReferencedObject($source, 'required', $target);
+        $this->refHelper->setReferencedObject($source, 'required', $target);
         $em->persist($source);
         $em->flush();
         $sourceId = $source->getId();
@@ -173,7 +169,7 @@ class ReferenceHelperTest extends TestCase
 
         $dbSource = $em->getRepository(Entity\Source::class)->find($sourceId);
 
-        $dbTarget = $refHelper->getReferencedObject($dbSource, 'required');
+        $dbTarget = $this->refHelper->getReferencedObject($dbSource, 'required');
         $this->assertInstanceOf(Entity\Target::class, $dbTarget);
         $this->assertEquals($targetId, $dbTarget->getId());
     }
@@ -183,8 +179,6 @@ class ReferenceHelperTest extends TestCase
         $sm = Bootstrap::getServiceManager();
         $em = $sm->get('Doctrine\ORM\EntityManager');
         /* @var $em \Doctrine\ORM\EntityManagerInterface */
-        $refHelper = $sm->get(ReferenceHelper::class);
-        /* @var $refHelper ReferenceHelper */
 
         $target = new Entity\Target();
         $em->persist($target);
@@ -193,28 +187,24 @@ class ReferenceHelperTest extends TestCase
 
         $source = new Entity\Source();
 
-        $refHelper->setReferencedObject($source, 'nullable', $target);
+        $this->refHelper->setReferencedObject($source, 'nullable', $target);
         $this->assertInstanceOf(
             Entity\Target::class,
-            $refHelper->getReferencedObject($source, 'nullable')
+            $this->refHelper->getReferencedObject($source, 'nullable')
         );
 
-        $refHelper->setReferencedObject($source, 'nullable', null);
-        $this->assertNull($refHelper->getReferencedObject($source, 'nullable'));
+        $this->refHelper->setReferencedObject($source, 'nullable', null);
+        $this->assertNull($this->refHelper->getReferencedObject($source, 'nullable'));
     }
 
     public function testRefWithoutIdentifiersDenied()
     {
-        $sm = Bootstrap::getServiceManager();
-        $refHelper = $sm->get(ReferenceHelper::class);
-        /* @var $refHelper ReferenceHelper */
-
         $target = new Entity\Target();
         $source = new Entity\Source();
 
         $this->expectException(Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('Target object has no identifiers, must be persisted first!');
-        $refHelper->setReferencedObject($source, 'nullable', $target);
+        $this->refHelper->setReferencedObject($source, 'nullable', $target);
     }
 
     public function testPreventForbiddenTarget()
@@ -222,8 +212,6 @@ class ReferenceHelperTest extends TestCase
         $sm = Bootstrap::getServiceManager();
         $em = $sm->get('Doctrine\ORM\EntityManager');
         /* @var $em \Doctrine\ORM\EntityManagerInterface */
-        $refHelper = $sm->get(ReferenceHelper::class);
-        /* @var $refHelper ReferenceHelper */
 
         $target = new Entity\NotAllowed();
         $em->persist($target);
@@ -234,7 +222,73 @@ class ReferenceHelperTest extends TestCase
 
         $this->expectException(Exception\InvalidArgumentException::class);
         $this->expectExceptionMessage('is not allowed for reference');
-        $refHelper->setReferencedObject($source, 'nullable', $target);
+        $this->refHelper->setReferencedObject($source, 'nullable', $target);
+    }
+
+    public function testGetNullFilterValues()
+    {
+        $filter = $this->refHelper->getEntityFilterData(
+            Entity\Source::class,
+            'nullable',
+            null
+        );
+
+        $this->assertEquals([
+            'nullableClass'       => null,
+            'nullableIdentifiers' => null,
+        ], $filter);
+    }
+
+    public function testGetClassFilterValues()
+    {
+        $filter = $this->refHelper->getClassFilterData(
+            Entity\Source::class,
+            'nullable',
+            Entity\Target::class
+        );
+
+        $this->assertEquals([
+            'nullableClass' => Entity\Target::class,
+        ], $filter);
+    }
+
+    public function testGetEntityFilterValues()
+    {
+        $sm = Bootstrap::getServiceManager();
+        $em = $sm->get('Doctrine\ORM\EntityManager');
+        $target = new Entity\Target();
+        $em->persist($target);
+        // flush to set identifiers
+        $em->flush();
+
+        $filter = $this->refHelper->getEntityFilterData(
+            Entity\Source::class,
+            'nullable',
+            $target
+        );
+
+        $this->assertEquals([
+            'nullableClass'       => Entity\Target::class,
+            'nullableIdentifiers' => '{"id":'.$target->getId().'}',
+        ], $filter);
+    }
+
+    public function testGetFilterValuesInvalidTarget()
+    {
+        $sm = Bootstrap::getServiceManager();
+        $em = $sm->get('Doctrine\ORM\EntityManager');
+        $na = new Entity\NotAllowed();
+        $em->persist($na);
+        // flush to set identifiers
+        $em->flush();
+
+        $this->expectException(Exception\BadMethodCallException::class);
+        $this->expectExceptionMessage('is not allowed for reference');
+        $this->refHelper->getEntityFilterData(
+            Entity\Source::class,
+            'nullable',
+            $na
+        );
     }
 
     /**

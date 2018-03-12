@@ -54,8 +54,20 @@ interface HasReferenceInterface
      * be NULL for optional associations.
      *
      * @param string $name
-     * @param string $className
-     * @param array $identifiers
+     * @param string|null $className
+     * @param array|null $identifiers
      */
     public function setReference(string $name, ?string $className, ?array $identifiers);
+
+    /**
+     * Returns a list of [column => value] to create DQL / add to a QueryBuilder
+     * to filter for entities referencing a given class or concrete instance.
+     *
+     * @param string $name
+     * @param string|null $className
+     * @param array|null $identifiers
+     *
+     * @return array
+     */
+    public function getFilterValues(string $name, ?string $className, ?array $identifiers) : array;
 }

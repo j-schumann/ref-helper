@@ -95,8 +95,8 @@ trait HasReferenceTrait
      * be NULL for optional associations.
      *
      * @param string $name
-     * @param string $className
-     * @param array $identifiers
+     * @param string|null $className
+     * @param array|null $identifiers
      * @throws \Vrok\References\Exception\BadMethodCallException when the parameters are incomplete
      * @throws \Vrok\References\Exception\DomainException when the reference does not exist or is not nullable
      */
@@ -120,5 +120,50 @@ trait HasReferenceTrait
         $this->{$name.'Identifiers'} = $identifiers
             ? json_encode($identifiers)
             : null;
+    }
+
+    /**
+     * Returns a list of [column => value] to create DQL / add to a QueryBuilder
+     * to filter for entities referencing a given class or concrete instance.
+     *
+     * @param string $name
+     * @param string|null $className
+     * @param array|null $identifiers
+     * @return array
+     * @throws Exception\DomainException when the requested reference does not exist
+     * @throws Exception\BadMethodCallException when identifiers are given but no classname
+     */
+    public function getFilterValues(string $name, ?string $className, ?array $identifiers) : array
+    {
+        if (! isset($this->references[$name])) {
+            throw new Exception\DomainException("Unknown reference name '$name'!");
+        }
+
+        // neither class nor identifiers given -> search for "reference not set"
+        if (empty($className) && empty($identifiers)) {
+            return [
+                $name.'Class'       => null,
+                $name.'Identifiers' => null,
+            ];
+        }
+
+        // only class given -> search for "all object referencing this class"
+        if (empty($identifiers)) {
+            return [
+                $name.'Class' => $className,
+            ];
+        }
+
+        // only identifiers given -> forbidden
+        if (empty($className)) {
+            throw new Exception\BadMethodCallException(
+                'When filtering by reference the classname must be set!'
+            );
+        }
+
+        return [
+            $name.'Class'       => $className,
+            $name.'Identifiers' => json_encode($identifiers),
+        ];
     }
 }

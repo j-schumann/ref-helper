@@ -32,6 +32,53 @@ class HasReferenceTest extends TestCase
         $source->isReferenceNullable('undefined');
     }
 
+    public function testGetNullFilterValues()
+    {
+        $source = new Entity\Source();
+        $filter = $source->getFilterValues('nullable', null, null);
+
+        $this->assertEquals([
+            'nullableClass'       => null,
+            'nullableIdentifiers' => null,
+        ], $filter);
+    }
+
+    public function testGetClassFilterValues()
+    {
+        $source = new Entity\Source();
+        $filter = $source->getFilterValues('nullable', Entity\Target::class, null);
+
+        $this->assertEquals([
+            'nullableClass' => Entity\Target::class,
+        ], $filter);
+    }
+
+    public function testGetEntityFilterValues()
+    {
+        $source = new Entity\Source();
+        $filter = $source->getFilterValues(
+            'nullable',
+            Entity\Target::class,
+            ['id' => 1]
+        );
+
+        $this->assertEquals([
+            'nullableClass'       => Entity\Target::class,
+            'nullableIdentifiers' => '{"id":1}',
+        ], $filter);
+    }
+
+    public function testGetIdentifierFilterValues()
+    {
+        $source = new Entity\Source();
+
+        $this->expectException(Exception\BadMethodCallException::class);
+        $this->expectExceptionMessage(
+            'When filtering by reference the classname must be set!'
+        );
+        $source->getFilterValues('nullable', null, ['id' => 1]);
+    }
+
     public function testSetNullReferenceWorks()
     {
         $source = new Entity\Source();

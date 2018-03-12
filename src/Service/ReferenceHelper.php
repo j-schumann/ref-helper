@@ -119,6 +119,87 @@ class ReferenceHelper
     }
 
     /**
+     * Returns an array of [column => value] to create DQL / add to a querybuilder
+     * to filter for all entities of $sourceClass that reference an object of
+     * $targetClass.
+     *
+     * @param string $sourceClass
+     * @param string $reference
+     * @param string $targetClass
+     * @return array
+     * @throws Exception\BadMethodCallException when the source class doesn't
+     *     implement HasReferenceInterface or the $refObject is no allowed target
+     */
+    public function getClassFilterData(
+        string $sourceClass,
+        string $reference,
+        string $targetClass
+    ) : array {
+        $source = new $sourceClass;
+        if (! $source instanceof Entity\HasReferenceInterface) {
+            throw new Exception\BadMethodCallException(
+                "$sourceClass does not implement the HasReferenceInterface!"
+            );
+        }
+
+        if (! $this->isAllowedTarget($source, $reference, new $targetClass())) {
+            throw new Exception\BadMethodCallException(
+                "$targetClass is not allowed for reference $reference!"
+            );
+        }
+
+        return $source->getFilterValues($reference, $targetClass, null);
+    }
+
+    /**
+     * Returns an array of [column => value] to create DQL / add to a querybuilder
+     * to filter for all entities of $sourceClass that reference $refObject.
+     *
+     * @param string $sourceClass
+     * @param string $reference
+     * @param object|null $refObject
+     * @return array
+     * @throws Exception\BadMethodCallException when the source class doesn't
+     *     implement HasReferenceInterface or the $refObject is no allowed target
+     * @throws Exception\InvalidArgumentException when the $refObject has no
+     *     identifiers set
+     */
+    public function getEntityFilterData(
+        string $sourceClass,
+        string $reference,
+        /* ?object */ $refObject
+    ) : array {
+        $source = new $sourceClass();
+        if (! $source instanceof Entity\HasReferenceInterface) {
+            throw new Exception\BadMethodCallException(
+                "$sourceClass does not implement the HasReferenceInterface!"
+            );
+        }
+
+        // search for "no object referenced"
+        if (! $refObject) {
+            return $source->getFilterValues($reference, null, null);
+        }
+
+        $refClass = get_class($refObject);
+        if (! $this->isAllowedTarget($source, $reference, $refObject)) {
+            throw new Exception\BadMethodCallException(
+                "$refClass is not allowed for reference $reference!"
+            );
+        }
+
+        $refMeta = $this->entityManager->getClassMetadata($refClass);
+        $identifiers = $refMeta->getIdentifierValues($refObject);
+        if (! count($identifiers)) {
+            throw new Exception\InvalidArgumentException(
+                'Target object has no identifiers, must be persisted first!'
+            );
+        }
+
+        return $source->getFilterValues($reference, $refClass, $identifiers);
+    }
+
+    /**
      * Checks if the given object is allowed for the given entity and reference.
      * This does _not_ check if the reference exists on the entity!
      *
