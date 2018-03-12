@@ -252,6 +252,48 @@ class ReferenceHelperTest extends TestCase
         ], $filter);
     }
 
+    public function testGetClassFilterWithUnsupportedSource()
+    {
+        $this->expectException(Exception\BadMethodCallException::class);
+        $this->expectExceptionMessage('does not implement the HasReferenceInterface');
+        $this->refHelper->getClassFilterData(
+            Entity\Target::class,
+            'nullable',
+            Entity\Target::class
+        );
+    }
+
+    public function testGetClassFilterWithUnsupportedTarget()
+    {
+        $this->expectException(Exception\BadMethodCallException::class);
+        $this->expectExceptionMessage('is not allowed for reference');
+        $this->refHelper->getClassFilterData(
+            Entity\Source::class,
+            'nullable',
+            Entity\NotAllowed::class
+        );
+    }
+
+    public function testGetEntityFilterWithUnsupportedTarget()
+    {
+        $sm = Bootstrap::getServiceManager();
+        $em = $sm->get('Doctrine\ORM\EntityManager');
+        /* @var $em \Doctrine\ORM\EntityManagerInterface */
+
+        $target = new Entity\NotAllowed();
+        $em->persist($target);
+        // flush to set identifiers
+        $em->flush();
+
+        $this->expectException(Exception\BadMethodCallException::class);
+        $this->expectExceptionMessage('is not allowed for reference');
+        $this->refHelper->getEntityFilterData(
+            Entity\Source::class,
+            'nullable',
+            $target
+        );
+    }
+
     public function testGetEntityFilterValues()
     {
         $sm = Bootstrap::getServiceManager();
