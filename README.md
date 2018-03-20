@@ -4,6 +4,24 @@ Library to support polymorphic asssociations with Doctrine 2 in Zend Framework 3
 
 [![Build Status](https://travis-ci.org/j-schumann/ref-helper.svg?branch=master)](https://travis-ci.org/j-schumann/ref-helper) [![Coverage Status](https://coveralls.io/repos/github/j-schumann/ref-helper/badge.svg?branch=master)](https://coveralls.io/github/j-schumann/ref-helper?branch=master)
 
+Many applications have polymorphic relations where we don't know (and don't want
+to know in advance) which entities may be assigned to which (e.g. which entity
+is owned by which). For example a bank account may be owned by an user or an
+organization, a validation may belong to a bank account or an user.
+
+To support this loose coupling we store the class of the referenced entity and
+the identifiers forming the primary key (e.g. autoincrement or composite keys)
+in the referencing entity in separate columns.
+The referencing entities should be kept simple POPOs, they need to implement
+```Vrok\References\Entity\HasReferenceInterface```, which is implemented in
+```Vrok\References\Entity\HasReferenceTrait``` for re-use. The interface and trait
+support multiple references on one entity, for example to reference a creator
+and an owner.
+
+The ```Vrok\References\Service\ReferenceHelper``` builds on this principle by
+providing functions to set and retrieve the referenced entities. The helper
+also has the ability to restrict references to only one or some targeted classes.
+
 ## Usage
 ### Entity preparation
 

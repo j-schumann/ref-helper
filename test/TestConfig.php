@@ -31,6 +31,7 @@ return [
         'DoctrineModule',
         'DoctrineORMModule',
         'Vrok\References',
+        'Vrok'
     ],
     'module_listener_options' => [
         'config_glob_paths'    => [

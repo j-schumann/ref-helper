@@ -2,7 +2,7 @@
 
 The project follows Semantic Versioning (http://semver.org/)
 
-## 1.1.0 - 2018-03-12
+## 1.1.0 - 2018-03-20
 ### Added
 * HasReferenceInterface::getFilterValues, ReferenceHelper::getClassFilterData
   and ReferenceHelper::getEntityFilterData to support querying
