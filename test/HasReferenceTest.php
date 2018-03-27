@@ -10,7 +10,8 @@ namespace RefHelperTest;
 
 use ReflectionObject;
 use PHPUnit\Framework\TestCase;
-use Vrok\References\Exception;
+use Vrok\References\Exception\DomainException;
+use Vrok\References\Exception\InvalidArgumentException;
 
 class HasReferenceTest extends TestCase
 {
@@ -28,7 +29,7 @@ class HasReferenceTest extends TestCase
         $this->assertTrue($source->isReferenceNullable('nullable'));
         $this->assertFalse($source->isReferenceNullable('required'));
 
-        $this->expectException(Exception\DomainException::class);
+        $this->expectException(DomainException::class);
         $source->isReferenceNullable('undefined');
     }
 
@@ -72,7 +73,7 @@ class HasReferenceTest extends TestCase
     {
         $source = new Entity\Source();
 
-        $this->expectException(Exception\BadMethodCallException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(
             'When filtering by reference the classname must be set!'
         );
@@ -117,7 +118,7 @@ class HasReferenceTest extends TestCase
     {
         $source = new Entity\Source();
 
-        $this->expectException(Exception\DomainException::class);
+        $this->expectException(DomainException::class);
         $source->setReference('unknown', Entity\Target::class, ['id' => 1]);
     }
 
@@ -125,7 +126,7 @@ class HasReferenceTest extends TestCase
     {
         $source = new Entity\Source();
 
-        $this->expectException(Exception\BadMethodCallException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(
             'When setting a reference, both $className and $identifiers must be set or empty'
         );
@@ -136,7 +137,7 @@ class HasReferenceTest extends TestCase
     {
         $source = new Entity\Source();
 
-        $this->expectException(Exception\BadMethodCallException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(
             'When setting a reference, both $className and $identifiers must be set or empty'
         );
@@ -147,7 +148,7 @@ class HasReferenceTest extends TestCase
     {
         $source = new Entity\Source();
 
-        $this->expectException(Exception\DomainException::class);
+        $this->expectException(DomainException::class);
         $this->expectExceptionMessage("Reference 'required' cannot be NULL!");
         $source->setReference('required', null, null);
     }
@@ -174,7 +175,7 @@ class HasReferenceTest extends TestCase
     {
         $source = new Entity\Source();
 
-        $this->expectException(Exception\DomainException::class);
+        $this->expectException(DomainException::class);
         $source->GetReference('unknown');
     }
 }

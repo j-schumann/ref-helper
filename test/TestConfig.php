@@ -17,7 +17,7 @@ return [
             'ref_entities' => [
                 'class' => 'Doctrine\ORM\Mapping\Driver\AnnotationDriver',
                 'cache' => 'array',
-                'paths' => [__DIR__.'/RefHelperTest/Entity'],
+                'paths' => [__DIR__.'/Entity'],
             ],
             'orm_default' => [
                 'drivers' => [

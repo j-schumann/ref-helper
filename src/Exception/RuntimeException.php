@@ -8,6 +8,6 @@
 
 namespace Vrok\References\Exception;
 
-class BadMethodCallException extends \BadMethodCallException implements ExceptionInterface
+class RuntimeException extends \RuntimeException implements ExceptionInterface
 {
 }

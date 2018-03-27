@@ -10,7 +10,8 @@ namespace RefHelperTest;
 
 use PHPUnit\Framework\TestCase;
 use RefHelperTest\Bootstrap;
-use Vrok\References\Exception;
+use Vrok\References\Exception\DomainException;
+use Vrok\References\Exception\InvalidArgumentException;
 use Vrok\References\Service\ReferenceHelper;
 
 class ReferenceHelperTest extends TestCase
@@ -125,6 +126,45 @@ class ReferenceHelperTest extends TestCase
         $this->assertTrue($unlistedAllowed2);
     }
 
+    public function testGetReferenceData()
+    {
+        $sm = Bootstrap::getServiceManager();
+        $em = $sm->get('Doctrine\ORM\EntityManager');
+        /* @var $em \Doctrine\ORM\EntityManagerInterface */
+
+        $target = new Entity\Target();
+        $em->persist($target);
+        // flush to set identifiers
+        $em->flush();
+
+        $refData = $this->refHelper->getReferenceData($target);
+        $this->assertEquals([
+            'class'       => Entity\Target::class,
+            'identifiers' => ['id' => $target->getId()],
+        ], $refData);
+    }
+
+    public function testGetObject()
+    {
+        $sm = Bootstrap::getServiceManager();
+        $em = $sm->get('Doctrine\ORM\EntityManager');
+        /* @var $em \Doctrine\ORM\EntityManagerInterface */
+
+        $target = new Entity\Target();
+        $em->persist($target);
+        // flush to set identifiers
+        $em->flush();
+
+        $refData = $this->refHelper->getReferenceData($target);
+
+        // clear to refetch from db
+        $em->clear();
+
+        $object = $this->refHelper->getObject($refData);
+        $this->assertInstanceOf(Entity\Target::class, $object);
+        $this->assertEquals($target->getId(), $object->getId());
+    }
+
     public function testCanSetAndGetReference()
     {
         $sm = Bootstrap::getServiceManager();
@@ -202,7 +242,7 @@ class ReferenceHelperTest extends TestCase
         $target = new Entity\Target();
         $source = new Entity\Source();
 
-        $this->expectException(Exception\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Target object has no identifiers, must be persisted first!');
         $this->refHelper->setReferencedObject($source, 'nullable', $target);
     }
@@ -220,7 +260,7 @@ class ReferenceHelperTest extends TestCase
 
         $source = new Entity\Source();
 
-        $this->expectException(Exception\InvalidArgumentException::class);
+        $this->expectException(DomainException::class);
         $this->expectExceptionMessage('is not allowed for reference');
         $this->refHelper->setReferencedObject($source, 'nullable', $target);
     }
@@ -254,7 +294,7 @@ class ReferenceHelperTest extends TestCase
 
     public function testGetClassFilterWithUnsupportedSource()
     {
-        $this->expectException(Exception\BadMethodCallException::class);
+        $this->expectException(DomainException::class);
         $this->expectExceptionMessage('does not implement the HasReferenceInterface');
         $this->refHelper->getClassFilterData(
             Entity\Target::class,
@@ -265,7 +305,7 @@ class ReferenceHelperTest extends TestCase
 
     public function testGetClassFilterWithUnsupportedTarget()
     {
-        $this->expectException(Exception\BadMethodCallException::class);
+        $this->expectException(DomainException::class);
         $this->expectExceptionMessage('is not allowed for reference');
         $this->refHelper->getClassFilterData(
             Entity\Source::class,
@@ -285,7 +325,7 @@ class ReferenceHelperTest extends TestCase
         // flush to set identifiers
         $em->flush();
 
-        $this->expectException(Exception\BadMethodCallException::class);
+        $this->expectException(DomainException::class);
         $this->expectExceptionMessage('is not allowed for reference');
         $this->refHelper->getEntityFilterData(
             Entity\Source::class,
@@ -324,7 +364,7 @@ class ReferenceHelperTest extends TestCase
         // flush to set identifiers
         $em->flush();
 
-        $this->expectException(Exception\BadMethodCallException::class);
+        $this->expectException(DomainException::class);
         $this->expectExceptionMessage('is not allowed for reference');
         $this->refHelper->getEntityFilterData(
             Entity\Source::class,

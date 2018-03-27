@@ -10,7 +10,9 @@ namespace Vrok\References\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Vrok\References\Entity;
-use Vrok\References\Exception;
+use Vrok\References\Exception\DomainException;
+use Vrok\References\Exception\InvalidArgumentException;
+use Vrok\References\Exception\RuntimeException;
 
 /**
  * ZF2|3 & Doctrine2 helper to handly polymorphic associations between entities
@@ -71,8 +73,55 @@ class ReferenceHelper
             return null;
         }
 
-        $repo = $this->entityManager->getRepository($ref['class']);
-        return $repo->find($ref['identifiers']);
+        return $this->getObject($ref);
+    }
+
+    /**
+     * Retrieve the object defined by the given reference data.
+     *
+     * @param array $reference
+     * @return ?object
+     * @throws DomainException when the reference data is incomplete
+     * @throws RuntimeException when the enity / repository for the reference
+     *     data could not be found
+     */
+    public function getObject(array $reference) /*: ?object*/
+    {
+        if (empty($reference['class']) || empty($reference['identifiers'])) {
+            throw new DomainException(
+                '"class" and "identifiers" must be set in the reference data!'
+            );
+        }
+
+        $repo = $this->entityManager->getRepository($reference['class']);
+        if (! $repo) {
+            throw new RuntimeException('Could not get repository for class "'
+                    .$reference['class'].'"!');
+        }
+
+        return $repo->find($reference['identifiers']);
+    }
+
+    /**
+     * Retrieve the class and identifiers used to reference the given object.
+     *
+     * @param object $object
+     * @return array
+     * @throws InvalidArgumentException when the object has no identifiers set
+     */
+    public function getReferenceData(/*object*/ $object) : array
+    {
+        $refClass = get_class($object);
+        $refMeta = $this->entityManager->getClassMetadata($refClass);
+
+        $identifiers = $refMeta->getIdentifierValues($object);
+        if (! count($identifiers)) {
+            throw new InvalidArgumentException(
+                'Target object has no identifiers, must be persisted first!'
+            );
+        }
+
+        return ['class' => $refClass, 'identifiers' => $identifiers];
     }
 
     /**
@@ -83,10 +132,10 @@ class ReferenceHelper
      * @param \Vrok\References\Entity\HasReferenceInterface $object
      * @param string $refName
      * @param object|null $refObject
-     * @throws \Vrok\References\Exception\DomainException when the reference
-     *     does not exist or is not nullable
+     * @throws DomainException when the reference does not exist or is not
+     *     nullable or the target is not allowed for the reference
      * @throws \Vrok\References\Exception\InvalidArgumentException when the
-     *     refObject has no identifiers or is not allowed for the reference
+     *     refObject has no identifiers
      */
     public function setReferencedObject(
         Entity\HasReferenceInterface $object,
@@ -101,21 +150,13 @@ class ReferenceHelper
         if (! $this->isAllowedTarget($object, $refName, $refObject)) {
             $target = get_class($refObject);
             $class = get_class($object);
-            throw new Exception\InvalidArgumentException(
+            throw new DomainException(
                 "Class $target is not allowed for reference $refName on entity $class!"
             );
         }
 
-        $refClass = get_class($refObject);
-        $refMeta = $this->entityManager->getClassMetadata($refClass);
-        $identifiers = $refMeta->getIdentifierValues($refObject);
-        if (! count($identifiers)) {
-            throw new Exception\InvalidArgumentException(
-                'Target object has no identifiers, must be persisted first!'
-            );
-        }
-
-        $object->setReference($refName, $refClass, $identifiers);
+        $refData = $this->getReferenceData($refObject);
+        $object->setReference($refName, $refData['class'], $refData['identifiers']);
     }
 
     /**
@@ -127,7 +168,7 @@ class ReferenceHelper
      * @param string $reference
      * @param string $targetClass
      * @return array
-     * @throws Exception\BadMethodCallException when the source class doesn't
+     * @throws DomainException when the source class doesn't
      *     implement HasReferenceInterface or the $refObject is no allowed target
      */
     public function getClassFilterData(
@@ -137,13 +178,13 @@ class ReferenceHelper
     ) : array {
         $source = new $sourceClass;
         if (! $source instanceof Entity\HasReferenceInterface) {
-            throw new Exception\BadMethodCallException(
+            throw new DomainException(
                 "$sourceClass does not implement the HasReferenceInterface!"
             );
         }
 
         if (! $this->isAllowedTarget($source, $reference, new $targetClass())) {
-            throw new Exception\BadMethodCallException(
+            throw new DomainException(
                 "$targetClass is not allowed for reference $reference!"
             );
         }
@@ -159,9 +200,9 @@ class ReferenceHelper
      * @param string $reference
      * @param object|null $refObject
      * @return array
-     * @throws Exception\BadMethodCallException when the source class doesn't
+     * @throws DomainException when the source class doesn't
      *     implement HasReferenceInterface or the $refObject is no allowed target
-     * @throws Exception\InvalidArgumentException when the $refObject has no
+     * @throws InvalidArgumentException when the $refObject has no
      *     identifiers set
      */
     public function getEntityFilterData(
@@ -171,7 +212,7 @@ class ReferenceHelper
     ) : array {
         $source = new $sourceClass();
         if (! $source instanceof Entity\HasReferenceInterface) {
-            throw new Exception\BadMethodCallException(
+            throw new DomainException(
                 "$sourceClass does not implement the HasReferenceInterface!"
             );
         }
@@ -181,22 +222,14 @@ class ReferenceHelper
             return $source->getFilterValues($reference, null, null);
         }
 
-        $refClass = get_class($refObject);
+        $refData = $this->getReferenceData($refObject);
         if (! $this->isAllowedTarget($source, $reference, $refObject)) {
-            throw new Exception\BadMethodCallException(
-                "$refClass is not allowed for reference $reference!"
+            throw new DomainException(
+                "{$refData['class']} is not allowed for reference $reference!"
             );
         }
 
-        $refMeta = $this->entityManager->getClassMetadata($refClass);
-        $identifiers = $refMeta->getIdentifierValues($refObject);
-        if (! count($identifiers)) {
-            throw new Exception\InvalidArgumentException(
-                'Target object has no identifiers, must be persisted first!'
-            );
-        }
-
-        return $source->getFilterValues($reference, $refClass, $identifiers);
+        return $source->getFilterValues($reference, $refData['class'], $refData['identifiers']);
     }
 
     /**

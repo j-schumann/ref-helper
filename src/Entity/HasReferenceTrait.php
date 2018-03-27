@@ -8,7 +8,8 @@
 
 namespace Vrok\References\Entity;
 
-use Vrok\References\Exception;
+use Vrok\References\Exception\DomainException;
+use Vrok\References\Exception\InvalidArgumentException;
 
 /**
  * Allows the implementing entity to reference any given record without requiring an
@@ -50,12 +51,12 @@ trait HasReferenceTrait
      * @param string $name
      *
      * @return bool
-     * @throws \Vrok\References\Exception\DomainException
+     * @throws DomainException
      */
     public function isReferenceNullable(string $name) : bool
     {
         if (! isset($this->references[$name])) {
-            throw new Exception\DomainException("Unknown reference name $name!");
+            throw new DomainException("Unknown reference name $name!");
         }
 
         return ! $this->references[$name];
@@ -69,12 +70,12 @@ trait HasReferenceTrait
      * @param string $name
      *
      * @return array|null.
-     * @throws \Vrok\References\Exception\DomainException
+     * @throws DomainException
      */
     public function getReference(string $name) : ?array
     {
         if (! isset($this->references[$name])) {
-            throw new Exception\DomainException("Unknown reference name '$name'!");
+            throw new DomainException("Unknown reference name '$name'!");
         }
 
         $class = $this->{$name.'Class'};
@@ -97,23 +98,23 @@ trait HasReferenceTrait
      * @param string $name
      * @param string|null $className
      * @param array|null $identifiers
-     * @throws \Vrok\References\Exception\BadMethodCallException when the parameters are incomplete
-     * @throws \Vrok\References\Exception\DomainException when the reference does not exist or is not nullable
+     * @throws InvalidArgumentException when the parameters are incomplete
+     * @throws DomainException when the reference does not exist or is not nullable
      */
     public function setReference(string $name, ?string $className, ?array $identifiers)
     {
         if (! isset($this->references[$name])) {
-            throw new Exception\DomainException("Unknown reference name '$name'!");
+            throw new DomainException("Unknown reference name '$name'!");
         }
 
         if ($className xor ! empty($identifiers)) {
-            throw new Exception\BadMethodCallException(
+            throw new InvalidArgumentException(
                 'When setting a reference, both $className and $identifiers must be set or empty'
             );
         }
 
         if (! $this->isReferenceNullable($name) && ! $className) {
-            throw new Exception\DomainException("Reference '$name' cannot be NULL!");
+            throw new DomainException("Reference '$name' cannot be NULL!");
         }
 
         $this->{$name.'Class'} = $className ?: null;
@@ -130,13 +131,13 @@ trait HasReferenceTrait
      * @param string|null $className
      * @param array|null $identifiers
      * @return array
-     * @throws Exception\DomainException when the requested reference does not exist
-     * @throws Exception\BadMethodCallException when identifiers are given but no classname
+     * @throws DomainException when the requested reference does not exist
+     * @throws InvalidArgumentException when identifiers are given but no classname
      */
     public function getFilterValues(string $name, ?string $className, ?array $identifiers) : array
     {
         if (! isset($this->references[$name])) {
-            throw new Exception\DomainException("Unknown reference name '$name'!");
+            throw new DomainException("Unknown reference name '$name'!");
         }
 
         // neither class nor identifiers given -> search for "reference not set"
@@ -156,7 +157,7 @@ trait HasReferenceTrait
 
         // only identifiers given -> forbidden
         if (empty($className)) {
-            throw new Exception\BadMethodCallException(
+            throw new InvalidArgumentException(
                 'When filtering by reference the classname must be set!'
             );
         }
