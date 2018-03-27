@@ -82,23 +82,18 @@ class ReferenceHelper
      * @param array $reference
      * @return ?object
      * @throws DomainException when the reference data is incomplete
-     * @throws RuntimeException when the enity / repository for the reference
-     *     data could not be found
+     * @throws \Doctrine\Common\Persistence\Mapping\MappingException when the
+     *     enity / repository for the reference data could not be found
      */
     public function getObject(array $reference) /*: ?object*/
     {
         if (empty($reference['class']) || empty($reference['identifiers'])) {
-            throw new DomainException(
+            throw new InvalidArgumentException(
                 '"class" and "identifiers" must be set in the reference data!'
             );
         }
 
         $repo = $this->entityManager->getRepository($reference['class']);
-        if (! $repo) {
-            throw new RuntimeException('Could not get repository for class "'
-                    .$reference['class'].'"!');
-        }
-
         return $repo->find($reference['identifiers']);
     }
 

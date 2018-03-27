@@ -33,6 +33,15 @@ class HasReferenceTest extends TestCase
         $source->isReferenceNullable('undefined');
     }
 
+    public function testGetFilterValuesChecksReference()
+    {
+        $source = new Entity\Source();
+
+        $this->expectException(DomainException::class);
+        $this->expectExceptionMessage('Unknown reference name');
+        $source->getFilterValues('unknown', null, ['id' => 1]);
+    }
+
     public function testGetNullFilterValues()
     {
         $source = new Entity\Source();

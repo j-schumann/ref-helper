@@ -12,6 +12,7 @@ use PHPUnit\Framework\TestCase;
 use RefHelperTest\Bootstrap;
 use Vrok\References\Exception\DomainException;
 use Vrok\References\Exception\InvalidArgumentException;
+use Vrok\References\Exception\RuntimeException;
 use Vrok\References\Service\ReferenceHelper;
 
 class ReferenceHelperTest extends TestCase
@@ -163,6 +164,13 @@ class ReferenceHelperTest extends TestCase
         $object = $this->refHelper->getObject($refData);
         $this->assertInstanceOf(Entity\Target::class, $object);
         $this->assertEquals($target->getId(), $object->getId());
+    }
+
+    public function testGetObjectChecksData()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('"class" and "identifiers" must be set in the reference data!');
+        $this->refHelper->getObject(['class' => '', 'identifiers' => []]);
     }
 
     public function testCanSetAndGetReference()
@@ -329,6 +337,18 @@ class ReferenceHelperTest extends TestCase
         $this->expectExceptionMessage('is not allowed for reference');
         $this->refHelper->getEntityFilterData(
             Entity\Source::class,
+            'nullable',
+            $target
+        );
+    }
+
+    public function testGetEntityFilterWithUnsupportedSource()
+    {
+        $target = new Entity\Target();
+        $this->expectException(DomainException::class);
+        $this->expectExceptionMessage('does not implement the HasReferenceInterface!');
+        $this->refHelper->getEntityFilterData(
+            Entity\Target::class,
             'nullable',
             $target
         );
