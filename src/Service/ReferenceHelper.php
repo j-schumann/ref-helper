@@ -104,7 +104,7 @@ class ReferenceHelper
      * @return array
      * @throws InvalidArgumentException when the object has no identifiers set
      */
-    public function getReferenceData(/*object*/ $object) : array
+    public function getReferenceData(object $object) : array
     {
         $refClass = get_class($object);
         $refMeta = $this->entityManager->getClassMetadata($refClass);
@@ -240,7 +240,7 @@ class ReferenceHelper
     public function isAllowedTarget(
         Entity\HasReferenceInterface $entity,
         string $refName,
-        /*object*/ $target
+        object $target
     ) : bool {
         $refFound = false;
 
